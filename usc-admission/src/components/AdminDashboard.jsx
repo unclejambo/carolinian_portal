@@ -87,11 +87,14 @@ function AdminDashboard() {
 
   const handleSaveStatus = async () => {
     if (!selectedStudent) return;
+  
+    const updatedStatus = examLocation ? 'RECEIPT' : newStatus;
+    
     try {
       const token = localStorage.getItem('token');
       await axios.put(
         `http://localhost:5000/admin/update-status/${selectedStudent.id}`,
-        { status: newStatus, examLocation },
+        { status: updatedStatus, examLocation },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setShowEditModal(false);
@@ -100,7 +103,7 @@ function AdminDashboard() {
       console.error('Failed to update status:', error);
     }
   };
-
+  
   const handleRemoveStudent = async () => {
     if (!selectedStudent) return;
     try {
@@ -168,14 +171,14 @@ function AdminDashboard() {
             <td>{student.exam_date || 'Not Set'}</td>
             <td>{student.exam_location || 'Not Set'}</td>
             <td>
-              {student.status === 'Waiting for Receipt' ? (
+              {student.status === 'RECEIPT APPROVAL' ? (
                 <>
                   <button onClick={() => handleApprovePayment(student.id)}>Approve Receipt</button>
                   <button onClick={() => handleDenyPayment(student.id)}>Deny Receipt</button>
                 </>
               ) : null}
 
-              {student.status === 'pending' ? (
+              {student.status === 'PENDING' ? (
                 <>
                   <button onClick={() => handleApprove(student.id)}>Approve Admission</button>
                   <button onClick={() => handleDeny(student.id)}>Deny Admission</button>
