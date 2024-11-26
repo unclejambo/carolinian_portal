@@ -69,7 +69,7 @@ function Register() {
         <h2>Register</h2>
 
         {applicantNumber ? (
-          <p>Your registration is successful! Your Applicant Number is: {applicantNumber}</p>
+          <p>Your registration is successful! {/*Your Applicant Number is: {applicantNumber}*/}</p>
         ) : (
           <form onSubmit={handleSubmit} encType="multipart/form-data">
             <input 

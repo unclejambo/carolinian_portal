@@ -30,16 +30,16 @@ app.get('/admin/verify', (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+    return res.status(401).json({ message: 'No token' });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(401).json({ message: 'Failed to authenticate token' });
+      return res.status(401).json({ message: 'Authenticate token error' });
     }
 
     if (decoded.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized as admin' });
+      return res.status(403).json({ message: 'Must be admin ka' });
     }
     res.status(200).json({ role: 'admin' });
   });
@@ -92,7 +92,7 @@ app.post('/register', upload.fields([{ name: 'birth_certificate' }, { name: 'gra
   const applicant_number = 'APP' + Date.now();
   const role = 'student';
 
-  console.log('Received registration request:', req.body);
+  console.log('Registration body:', req.body);
 
   if (!req.files['birth_certificate']) {
     console.error('No birth certificate uploaded');
@@ -216,7 +216,8 @@ app.get('/admin/applicants', authenticateJWT, async (req, res) => {
           data: applicants 
       });
   } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch applicants' });
+    //debug ni
+      res.status(500).json({ error: 'fetch applicants error' });
   }
 });
 
@@ -243,7 +244,7 @@ app.get('/admin/students', authenticateJWT, async (req, res) => {
           data: students 
       });
   } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch students' });
+      res.status(500).json({ error: 'students' });
   }
 });
 
@@ -287,18 +288,18 @@ app.put('/admin/update-status/:id', authenticateJWT, async (req, res) => {
       }
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'No student found to update' });
+        return res.status(404).json({ error: 'Student does not exist' });
       }
 
       if (status === 'Approved') {
-        const updatePaymentStatusSql = `UPDATE students SET status = 'Waiting for Payment' WHERE id = ?`;
+        const updatePaymentStatusSql = `UPDATE students SET status = 'Waiting for Receipt' WHERE id = ?`;
         db.query(updatePaymentStatusSql, [studentId], (err, result) => {
           if (err) {
             console.error('Failed to update payment status:', err.message);
             return res.status(500).json({ error: 'Failed to update payment status', details: err.message });
           }
 
-          console.log(`Student ${studentId} status updated to 'Waiting for Payment'`);
+          console.log(`Student ${studentId} status updated to 'Waiting for Receipt'`);
           return res.status(200).json({ 
             success: true, 
             message: 'Student status, exam location, and payment status updated successfully' 
@@ -350,20 +351,20 @@ app.post('/student/set-exam-date', authenticateJWT, (req, res) => {
   });
 });
 
-app.put('/admin/update-status/:studentId', authenticateJWT, (req, res) => {
-  const { status, examLocation } = req.body;
-  const studentId = req.params.studentId;
+// app.put('/admin/update-status/:studentId', authenticateJWT, (req, res) => {
+//   const { status, examLocation } = req.body;
+//   const studentId = req.params.studentId;
 
-  const sql = "UPDATE students SET status = ?, exam_location = ? WHERE id = ?";
-  db.query(sql, [status, examLocation, studentId], (err, result) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return res.status(500).json({ error: 'Database query failed' });
-    }
+//   const sql = "UPDATE students SET status = ?, exam_location = ? WHERE id = ?";
+//   db.query(sql, [status, examLocation, studentId], (err, result) => {
+//     if (err) {
+//       console.error('Database query error:', err);
+//       return res.status(500).json({ error: 'Database query failed' });
+//     }
 
-    res.json({ message: 'Status and exam location updated successfully' });
-  });
-});
+//     res.json({ message: 'Status and exam location updated successfully' });
+//   });
+// });
 
 app.get('/student-status', authenticateJWT, (req, res) => {
   const sql = "SELECT status FROM students WHERE id = ?";
@@ -420,8 +421,125 @@ app.get('/courses', (req, res) => {
   });
 });
 
+app.post('/student/upload-receipt', authenticateJWT, upload.single('receipt'), (req, res) => {
+  if (req.user.role !== 'student') {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  const studentId = req.user.id;
+  const receiptPath = req.file.path;
+
+  const sql = "UPDATE documents SET payment_receipt = ?, receipt_status = 'Pending' WHERE student_id = ?";
+  db.query(sql, [receiptPath, studentId], (err, result) => {
+    if (err) {
+      console.error('Failed to upload receipt:', err);
+      return res.status(500).json({ error: 'Failed to upload receipt' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'No documents found for this student' });
+    }
+
+    res.status(200).json({ success: true, message: 'Receipt uploaded successfully' });
+  });
+});
 
 
+// app.post('/admin/approve-payment/:studentId', authenticateJWT, (req, res) => {
+//   console.log("Approving payment for studentId:", req.params.studentId);
+//   if (req.user.role !== 'admin') {
+//     return res.status(403).json({ error: 'Access denied' });
+//   }
+
+//   const studentId = req.params.studentId;
+
+//   const sql = "UPDATE documents SET receipt_status = 'Approved' WHERE student_id = ? AND receipt_status = 'Waiting for Payment'";
+//   db.query(sql, [studentId], (err, result) => {
+//     if (err) {
+//       console.error('Failed to approve payment:', err);
+//       return res.status(500).json({ error: 'Failed to approve payment' });
+//     }
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).json({ error: 'No pending payment found for this student' });
+//     }
+
+//     res.status(200).json({ success: true, message: 'Payment approved successfully' });
+//   });
+// });
+app.post('/admin/approve-payment/:studentId', authenticateJWT, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  const studentId = req.params.studentId;
+
+  const sqlUpdateReceipt = "UPDATE documents SET receipt_status = 'Approved' WHERE student_id = ? AND receipt_status = 'Waiting for Receipt'";
+  const sqlUpdateStudentStatus = "UPDATE students SET status = 'Payment Approved' WHERE id = ? AND receipt_status = 'Waiting for Receipt'";
+
+  db.beginTransaction((err) => {
+    if (err) {
+      console.error('Failed to begin transaction:', err);
+      return res.status(500).json({ error: 'Failed to start transaction' });
+    }
+
+    db.query(sqlUpdateReceipt, [studentId], (err, result) => {
+      if (err) {
+        db.rollback(() => {
+          console.error('Error updating receipt status:', err);
+          return res.status(500).json({ error: 'Failed to approve payment' });
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        db.rollback(() => {
+          return res.status(404).json({ error: 'No pending payment found for this student' });
+        });
+      }
+
+      db.query(sqlUpdateStudentStatus, [studentId], (err, result) => {
+        if (err) {
+          db.rollback(() => {
+            console.error('Error updating student status:', err);
+            return res.status(500).json({ error: 'Failed to update student status' });
+          });
+        }
+
+        db.commit((err) => {
+          if (err) {
+            db.rollback(() => {
+              console.error('Failed to commit transaction:', err);
+              return res.status(500).json({ error: 'Failed to commit changes' });
+            });
+          }
+          res.status(200).json({ success: true, message: 'Payment approved and student status updated successfully' });
+        });
+      });
+    });
+  });
+});
+
+app.post('/admin/deny-payment/:studentId', authenticateJWT, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  const studentId = req.params.studentId;
+
+  const sql = "UPDATE documents SET receipt_status = 'Denied' WHERE student_id = ? AND receipt_status = 'Waiting for Payment'";
+  db.query(sql, [studentId], (err, result) => {
+    if (err) {
+      console.error('Failed to deny payment:', err);
+      return res.status(500).json({ error: 'Failed to deny payment' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'No pending payment found for this student' });
+    }
+
+    res.status(200).json({ success: true, message: 'Payment denied successfully' });
+  });
+});
 
 app.listen(5000, () => {
   console.log('Server running on port 5000');
