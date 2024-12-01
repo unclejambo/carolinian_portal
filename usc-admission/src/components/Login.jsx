@@ -41,7 +41,7 @@ function Login() {
   };
 
   const handleRegister = () => {
-    navigate('/course-selection');
+    navigate('/register');
   };
 
   return (
@@ -74,4 +74,3 @@ function Login() {
 }
 
 export default Login;
-

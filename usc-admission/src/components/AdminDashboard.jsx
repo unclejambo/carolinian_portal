@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 function AdminDashboard() {
   const [students, setStudents] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
   const [verificationFailed, setVerificationFailed] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [newStatus, setNewStatus] = useState('');
@@ -77,6 +78,17 @@ function AdminDashboard() {
     }
   };
   
+  const fetchStatusOptions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:5000/admin/status-options', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setStatusOptions(res.data.statusOptions);
+    } catch (error) {
+      console.error('Failed to fetch status options:', error);
+    }
+  };
 
   const handleEditStatus = (student) => {
     setSelectedStudent(student);
@@ -85,11 +97,35 @@ function AdminDashboard() {
     setShowEditModal(true);
   };
 
+  // const handleSaveStatus = async () => {
+  //   if (!selectedStudent) return;
+  
+  //   const updatedStatus = examLocation ? 'RECEIPT' : newStatus;
+    
+  //   try {
+  //     const token = localStorage.getItem('token');
+  //     await axios.put(
+  //       `http://localhost:5000/admin/update-status/${selectedStudent.id}`,
+  //       { status: updatedStatus, examLocation },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     setShowEditModal(false);
+  //     await fetchStudents();
+  //   } catch (error) {
+  //     console.error('Failed to update status:', error);
+  //   }
+  // };
+
   const handleSaveStatus = async () => {
     if (!selectedStudent) return;
   
-    const updatedStatus = examLocation ? 'RECEIPT' : newStatus;
-    
+    const updatedStatus = 
+      newStatus === 'SETEXAM' && examLocation
+        ? 'RECEIPT'
+        : newStatus;
+  
+      console.log('Sent:', { status: updatedStatus, examLocation });
+
     try {
       const token = localStorage.getItem('token');
       await axios.put(
@@ -103,6 +139,7 @@ function AdminDashboard() {
       console.error('Failed to update status:', error);
     }
   };
+  
   
   const handleRemoveStudent = async () => {
     if (!selectedStudent) return;
@@ -140,6 +177,7 @@ function AdminDashboard() {
 
     verifyAdminRole();
     fetchStudents();
+    fetchStatusOptions();
   }, [navigate]);
 
   if (verificationFailed) {
@@ -198,14 +236,15 @@ function AdminDashboard() {
         <div className="modal-overlay">
           <div className="modal">
             <h2>Edit Status for {selectedStudent.first_name} {selectedStudent.last_name}</h2>
-            <label>
-              Status:
-              <input
-                type="text"
+            Status:
+              <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
-              />
-            </label>
+              >
+                {statusOptions.map((status, index) => (
+                  <option key={index} value={status}>{status}</option>
+                ))}
+              </select>
             <label>
               Exam Location:
               <select
@@ -229,3 +268,5 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
+
+

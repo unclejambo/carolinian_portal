@@ -25,8 +25,13 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        setStatus(res.data.status || 'pending');
+        const currentStatus = res.data.status || 'pending';
+        setStatus(currentStatus);
         setIsAuthenticated(true);
+
+        if (currentStatus.toLowerCase() === 'partial') {
+          navigate('/courseSelection');
+        }
 
         if (res.data.exam_date) setExamDate(res.data.exam_date);
         if (res.data.exam_location) setExamLocation(res.data.exam_location);
@@ -86,41 +91,40 @@ function Dashboard() {
     }
   };
 
-const handleUploadReceipt = async () => {
-  if (!receipt) {
-    alert('Please upload a receipt.');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('receipt', receipt);
-
-  try {
-    const res = await axios.post('http://localhost:5000/student/upload-receipt', formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    if (res.data.success) {
-      alert('Receipt uploaded and status updated to receipt approval.');
-      setStatus('receipt approval');
+  const handleUploadReceipt = async () => {
+    if (!receipt) {
+      alert('Please upload a receipt.');
+      return;
     }
-  } catch (error) {
-    console.error('Error uploading receipt:', error);
-    alert('Failed to upload receipt. Please try again.');
-  }
-};
 
+    const formData = new FormData();
+    formData.append('receipt', receipt);
+
+    try {
+      const res = await axios.post('http://localhost:5000/student/upload-receipt', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data.success) {
+        alert('Receipt uploaded and status updated to receipt approval.');
+        setStatus('RECEIPT APPROVAL');
+      }
+    } catch (error) {
+      console.error('Error uploading receipt:', error);
+      alert('Failed to upload receipt. Please try again.');
+    }
+  };
 
   const isDateAvailable = (date) => availableDates.includes(date);
 
   let statusMessage;
   let statusStyle;
-  
+
   if (status.toLowerCase() === 'approved' && paymentStatus.toLowerCase() !== 'paid') {
-    statusMessage = 'You have been approved for admission. Please set your exam date.';
+    statusMessage = 'You have been approved for admission. Please upload your payment receipt.';
     statusStyle = { color: 'green' };
   } else if (status.toLowerCase() === 'waiting for approval of exam date') {
     statusMessage = 'Waiting for approval of exam date.';
@@ -128,23 +132,45 @@ const handleUploadReceipt = async () => {
   } else if (status.toLowerCase() === 'denied') {
     statusMessage = 'Your admission application has been denied.';
     statusStyle = { color: 'red' };
-  } else if (status.toLowerCase() === 'exam') {
-    statusMessage = 'Good Luck on your Exam!, You may come back after the exam to see the results.';
+  } else if (status.toLowerCase() === 'receipt') {
+    statusMessage = 'Good Luck on your Exam! You may come back after the exam to see the results.';
     statusStyle = { color: 'green' };
-  } else if(status.toLowerCase() === 'pending'){
+  } else if (status.toLowerCase() === 'pending') {
     statusMessage = 'Your admission status is still pending.';
     statusStyle = { color: 'yellow' };
-  } else if(status.toLowerCase() === 'receipt approval'){
-    statusMessage = 'We are still verifying your receipt';
+  } else if (status.toLowerCase() === 'receipt approval') {
+    statusMessage = 'We are still verifying your receipt.';
     statusStyle = { color: 'yellow' };
+  } else if (status.toLowerCase() === 'pass') {
+    statusMessage =
+      'Congratulations! You have passed. Check your email for a scheduled interview from the department of your chosen course.';
+    statusStyle = { color: 'green' };
+  } else if (status.toLowerCase() === 'advise') {
+    statusMessage =
+      'Based on your results, you are advised to shift. You may contact or visit the Office of Recruitment and Admissions.';
+    statusStyle = { color: 'blue' };
   }
-  
+
   return (
     <div>
       <h1>Student Dashboard</h1>
       <p style={statusStyle}>{statusMessage}</p>
 
       {status.toLowerCase() === 'approved' && paymentStatus.toLowerCase() !== 'paid' && (
+        <div>
+          <p>Please upload your payment receipt.</p>
+          <input type="file" accept="image/*" onChange={(e) => setReceipt(e.target.files[0])} />
+          <button onClick={handleUploadReceipt}>Upload Receipt</button>
+        </div>
+      )}
+
+      {status.toLowerCase() === 'receipt approval' && (
+        <div>
+          <p>We are verifying your payment receipt. Once approved, you can set your exam date.</p>
+        </div>
+      )}
+
+      {status.toLowerCase() === 'setexam' && (
         <div>
           <label>Set Exam Date:</label>
           <input
@@ -164,14 +190,6 @@ const handleUploadReceipt = async () => {
         </div>
       )}
 
-      {status.toLowerCase() === 'receipt' && (
-        <div>
-          <p>Please pay the amount of 3000 pesos and upload your receipt.</p>
-          <input type="file" accept="image/*" onChange={(e) => setReceipt(e.target.files[0])} />
-          <button onClick={handleUploadReceipt}>Upload Receipt</button>
-        </div>
-      )}
-
       {examLocation && <p>Exam Location: {examLocation}</p>}
 
       <button onClick={handleLogout}>Logout</button>
@@ -180,4 +198,5 @@ const handleUploadReceipt = async () => {
 }
 
 export default Dashboard;
+
 

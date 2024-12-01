@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const CourseSelection = () => {
@@ -7,6 +8,10 @@ const CourseSelection = () => {
   const [requirements, setRequirements] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [birthCertificateFile, setBirthCertificateFile] = useState(null);
+  const [gradesFile, setGradesFile] = useState(null);
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -29,13 +34,97 @@ const CourseSelection = () => {
     const selected = courses.find((course) => course.id === parseInt(courseId));
 
     if (selected) {
-      setSelectedCourse(selected.name);
+      setSelectedCourse(courseId);
       setRequirements(selected.requirements);
     } else {
       setSelectedCourse('');
       setRequirements('');
     }
   };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!selectedCourse) {
+  //     alert('Please select a course before proceeding.');
+  //     return;
+  //   }
+
+  //   if (!birthCertificateFile || !gradesFile) {
+  //     alert('Both files are required for submission.');
+  //     return;
+  //   }
+
+  //   try {
+  //     await axios.post('http://localhost:5000/student/select-course', {
+  //       courseId: selectedCourse,
+  //     });
+
+  //     const formData = new FormData();
+  //     formData.append('birthCertificate', birthCertificateFile);
+  //     formData.append('grades', gradesFile);
+
+  //     await axios.post('http://localhost:5000/student/upload-documents', formData, {
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data',
+  //       },
+  //     });
+
+  //     alert('Course and documents submitted successfully!');
+  //     navigate('/dashboard');
+  //   } catch (err) {
+  //     console.error('Error during submission:', err);
+  //     alert('Failed to submit. Please try again later.');
+  //   }
+  // };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    if (!selectedCourse) {
+      alert('Please select a course before proceeding.');
+      return;
+    }
+  
+    if (!birthCertificateFile || !gradesFile) {
+      alert('Both files are required for submission.');
+      return;
+    }
+  
+    try {
+      const token = localStorage.getItem('token');
+  
+      await axios.post(
+        'http://localhost:5000/student/select-course',
+        {
+          courseId: selectedCourse,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const formData = new FormData();
+      formData.append('birthCertificate', birthCertificateFile);
+      formData.append('grades', gradesFile);
+  
+      await axios.post('http://localhost:5000/student/upload-documents', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      alert('Course and documents submitted successfully!');
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Error during submission:', err);
+      alert('Failed to submit. Please try again later.');
+    }
+  };
+  
 
   return (
     <div>
@@ -58,7 +147,7 @@ const CourseSelection = () => {
       ) : error ? (
         <p className="error">{error}</p>
       ) : (
-        <>
+        <form onSubmit={handleSubmit}>
           <select
             onChange={handleCourseChange}
             defaultValue=""
@@ -71,7 +160,7 @@ const CourseSelection = () => {
             }}
           >
             <option value="" disabled>
-            
+              Select a course
             </option>
             {courses.map((course) => (
               <option key={course.id} value={course.id}>
@@ -84,23 +173,43 @@ const CourseSelection = () => {
             <div>
               <h3>Requirements for {selectedCourse}:</h3>
               <p>{requirements}</p>
-              <button
-                onClick={() => (window.location.href = '/register')}
-                style={{
-                  marginTop: '10px',
-                  padding: '10px 20px',
-                  backgroundColor: '#007BFF',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                }}
-              >
-                Next
-              </button>
             </div>
           )}
-        </>
+
+          <div style={{ marginTop: '20px' }}>
+            <label>
+              Upload Birth Certificate:
+              <input
+                type="file"
+                onChange={(e) => setBirthCertificateFile(e.target.files[0])}
+                style={{ display: 'block', margin: '10px 0' }}
+              />
+            </label>
+            <label>
+              Upload Grades:
+              <input
+                type="file"
+                onChange={(e) => setGradesFile(e.target.files[0])}
+                style={{ display: 'block', margin: '10px 0' }}
+              />
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              marginTop: '10px',
+              padding: '10px 20px',
+              backgroundColor: '#28A745',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+            }}
+          >
+            Submit
+          </button>
+        </form>
       )}
     </div>
   );
