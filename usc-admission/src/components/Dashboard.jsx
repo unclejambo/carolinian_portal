@@ -159,6 +159,20 @@ function Dashboard() {
       <h1 style={{ color: 'black' }}>Student Dashboard</h1>
       <p style={statusStyle}>{statusMessage}</p>
 
+      {status.toLowerCase() === 'approved' && paymentStatus.toLowerCase() !== 'paid' && (
+        <div>
+          <p style={{color: '#333'}}>Please upload your payment receipt.</p>
+          <input type="file" accept="image/*" onChange={(e) => setReceipt(e.target.files[0])} />
+          <button onClick={handleUploadReceipt}>Upload Receipt</button>
+        </div>
+      )}
+
+      {status.toLowerCase() === 'receipt approval' && (
+        <div>
+          <p style={{color: '#333'}}>We are verifying your payment receipt. Once approved, you can set your exam date.</p>
+        </div>
+      )}
+
       {status.toLowerCase() === 'setexam' && (
         <div>
           <label>Set Exam Date:</label>
