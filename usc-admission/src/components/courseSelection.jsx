@@ -101,8 +101,8 @@ const CourseSelection = () => {
   
 
   return (
-    <div className="dashboard">
-      {/* <header className="dashboard-header">
+    <div className="dashboard-content">
+      <header className="dashboard-header">
       <h1 style={{ color: 'black' }}>Carolinian Portal</h1>
       <div className="header-right" style={{ color: 'black' }}>
       <p>Student Name: John Doe<br />APPLICANT ID</p>
@@ -110,7 +110,7 @@ const CourseSelection = () => {
             Logout
           </button>
         </div>
-      </header> */}
+      </header>
       
       <div
         style={{
