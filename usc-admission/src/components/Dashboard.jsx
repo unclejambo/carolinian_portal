@@ -53,7 +53,10 @@ function Dashboard() {
         current <= oneYearAhead;
         current.setDate(current.getDate() + 1)
       ) {
-        dates.push(new Date(current).toISOString().split('T')[0]);
+        if (current.getDay() !== 0 && current > today) {
+          // Exclude Sundays (0) and today
+          dates.push(new Date(current).toISOString().split('T')[0]);
+        }
       }
 
       setAvailableDates(dates);
@@ -152,23 +155,9 @@ function Dashboard() {
   }
 
   return (
-    <div>
-      <h1>Student Dashboard</h1>
+    <div className="dashboard-content">
+      <h1 style={{ color: 'black' }}>Student Dashboard</h1>
       <p style={statusStyle}>{statusMessage}</p>
-
-      {status.toLowerCase() === 'approved' && paymentStatus.toLowerCase() !== 'paid' && (
-        <div>
-          <p>Please upload your payment receipt.</p>
-          <input type="file" accept="image/*" onChange={(e) => setReceipt(e.target.files[0])} />
-          <button onClick={handleUploadReceipt}>Upload Receipt</button>
-        </div>
-      )}
-
-      {status.toLowerCase() === 'receipt approval' && (
-        <div>
-          <p>We are verifying your payment receipt. Once approved, you can set your exam date.</p>
-        </div>
-      )}
 
       {status.toLowerCase() === 'setexam' && (
         <div>
@@ -176,6 +165,7 @@ function Dashboard() {
           <input
             type="date"
             value={examDate}
+            min={availableDates[0]}
             onChange={(e) => {
               const selectedDate = e.target.value;
               if (isDateAvailable(selectedDate)) {
