@@ -11,7 +11,6 @@ const CourseSelection = () => {
   const [birthCertificateFile, setBirthCertificateFile] = useState(null);
   const [gradesFile, setGradesFile] = useState(null);
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -19,7 +18,6 @@ const CourseSelection = () => {
         const response = await axios.get('http://localhost:5000/courses');
         setCourses(response.data);
       } catch (err) {
-        console.error('Error fetching courses:', err);
         setError('Failed to load courses. Please try again later.');
       } finally {
         setLoading(false);
@@ -32,187 +30,171 @@ const CourseSelection = () => {
   const handleCourseChange = (event) => {
     const courseId = event.target.value;
     const selected = courses.find((course) => course.id === parseInt(courseId));
-
-    if (selected) {
-      setSelectedCourse(courseId);
-      setRequirements(selected.requirements);
-    } else {
-      setSelectedCourse('');
-      setRequirements('');
-    }
+    setSelectedCourse(courseId);
+    setRequirements(selected ? selected.requirements : '');
   };
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   if (!selectedCourse) {
-  //     alert('Please select a course before proceeding.');
-  //     return;
-  //   }
-
-  //   if (!birthCertificateFile || !gradesFile) {
-  //     alert('Both files are required for submission.');
-  //     return;
-  //   }
-
-  //   try {
-  //     await axios.post('http://localhost:5000/student/select-course', {
-  //       courseId: selectedCourse,
-  //     });
-
-  //     const formData = new FormData();
-  //     formData.append('birthCertificate', birthCertificateFile);
-  //     formData.append('grades', gradesFile);
-
-  //     await axios.post('http://localhost:5000/student/upload-documents', formData, {
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //     });
-
-  //     alert('Course and documents submitted successfully!');
-  //     navigate('/dashboard');
-  //   } catch (err) {
-  //     console.error('Error during submission:', err);
-  //     alert('Failed to submit. Please try again later.');
-  //   }
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!selectedCourse) {
       alert('Please select a course before proceeding.');
       return;
     }
-  
+
     if (!birthCertificateFile || !gradesFile) {
       alert('Both files are required for submission.');
       return;
     }
-  
+
     try {
       const token = localStorage.getItem('token');
-  
+
       await axios.post(
         'http://localhost:5000/student/select-course',
-        {
-          courseId: selectedCourse,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { courseId: selectedCourse },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       const formData = new FormData();
       formData.append('birthCertificate', birthCertificateFile);
       formData.append('grades', gradesFile);
-  
+
       await axios.post('http://localhost:5000/student/upload-documents', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       alert('Course and documents submitted successfully!');
       navigate('/dashboard');
     } catch (err) {
-      console.error('Error during submission:', err);
       alert('Failed to submit. Please try again later.');
     }
   };
-  
 
   return (
-    <div>
-      <div
-        style={{
-          backgroundColor: '#fff',
-          padding: '20px',
-          borderRadius: '10px',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-          textAlign: 'center',
-          maxWidth: '400px',
-          margin: '20px auto',
-        }}
-      >
-        <h2 style={{ margin: '0', color: '#333' }}>Select a Course</h2>
-      </div>
-
+    <div className="dashboard-content"
+      style={{
+        padding: '30px',
+        borderRadius: '10px',
+        maxWidth: '500px',
+        margin: '40px auto',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        fontFamily: 'Arial, sans-serif',
+      }
+    }
+    >
+      <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '20px' }}>
+        Select a Course
+      </h2>
+  
       {loading ? (
-        <p>Loading courses...</p>
+        <p style={{ textAlign: 'center', color: '#555' }}>Loading courses...</p>
       ) : error ? (
-        <p className="error">{error}</p>
+        <p style={{ textAlign: 'center', color: 'red' }}>{error}</p>
       ) : (
         <form onSubmit={handleSubmit}>
-          <select
-            onChange={handleCourseChange}
-            defaultValue=""
-            style={{
-              color: '#000',
-              backgroundColor: '#fff',
-              padding: '5px',
-              borderRadius: '5px',
-              width: '200px',
-            }}
-          >
-            <option value="" disabled>
-              Select a course
-            </option>
-            {courses.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.name}
+          <div style={{ marginBottom: '20px' }}>
+            <label htmlFor="course-select" style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>
+              Choose a Course:
+            </label>
+            <select
+              id="course-select"
+              onChange={handleCourseChange}
+              defaultValue=""
+              style={{
+                color: '#333',
+                backgroundColor: '#fff',
+                padding: '10px',
+                borderRadius: '5px',
+                width: '100%',
+                border: '1px solid #ccc',
+                outline: 'none',
+              }}
+            >
+              <option value="" disabled>
+                Select a course
               </option>
-            ))}
-          </select>
-
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
+          </div>
+  
           {requirements && (
-            <div>
-              <h3>Requirements for {selectedCourse}:</h3>
-              <p>{requirements}</p>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ color: '#555' }}>Requirements:</h3>
+              <p style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '5px', color: '#555'}}>
+                {requirements}
+              </p>
             </div>
           )}
-
-          <div style={{ marginTop: '20px' }}>
-            <label>
+  
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', color: '#555' }}>
               Upload Birth Certificate:
-              <input
-                type="file"
-                onChange={(e) => setBirthCertificateFile(e.target.files[0])}
-                style={{ display: 'block', margin: '10px 0' }}
-              />
             </label>
-            <label>
-              Upload Grades:
-              <input
-                type="file"
-                onChange={(e) => setGradesFile(e.target.files[0])}
-                style={{ display: 'block', margin: '10px 0' }}
-              />
-            </label>
+            <input
+              type="file"
+              onChange={(e) => setBirthCertificateFile(e.target.files[0])}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+                backgroundColor: '#fff',
+                outline: 'none',
+              }}
+            />
           </div>
-
+  
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', color: '#555' }}>
+              Upload Grades:
+            </label>
+            <input
+              type="file"
+              onChange={(e) => setGradesFile(e.target.files[0])}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+                backgroundColor: '#fff',
+                outline: 'none',
+              }}
+            />
+          </div>
+  
           <button
             type="submit"
             style={{
-              marginTop: '10px',
-              padding: '10px 20px',
+              display: 'block',
+              width: '100%',
+              padding: '12px',
               backgroundColor: '#28A745',
               color: '#fff',
               border: 'none',
               borderRadius: '5px',
               cursor: 'pointer',
+              fontWeight: 'bold',
+              transition: 'background-color 0.3s',
             }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = '#218838')}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = '#28A745')}
           >
             Submit
           </button>
         </form>
       )}
     </div>
-  );
+  );  
 };
 
 export default CourseSelection;
