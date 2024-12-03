@@ -6,6 +6,9 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
+
+// const normalizedPath = path.normalize(doc.document_path).replace(/\\/g, '/');
 
 app.use(cors());
 
@@ -195,28 +198,6 @@ app.post('/student/select-course', authenticateJWT, (req, res) => {
   });
 });
 
-// app.post('/student/upload-documents', authenticateJWT, upload.fields([
-//   { name: 'birthCertificate', maxCount: 1 },
-//   { name: 'grades', maxCount: 1 },
-// ]), (req, res) => {
-//   console.log('Files received:', req.files);
-//   if (!req.files['birthCertificate'] || !req.files['grades']) {
-//     return res.status(400).json({ error: 'Both documents are required' });
-//   }
-//   const studentId = req.user.id;
-//   const birthCertificate = req.files['birthCertificate'][0].filename;
-//   const grades = req.files['grades'][0].filename;
-
-//   const sql = "UPDATE documents SET birth_certificate = ?, grades = ? WHERE id = ?";
-//   db.query(sql, [birthCertificate, grades, studentId], (err, result) => {
-//     if (err) {
-//       console.error('Database query error:', err);
-//       return res.status(500).json({ error: 'Failed to upload documents' });
-//     }
-//     res.json({ message: 'Documents uploaded successfully' });
-//   });
-// });
-
 app.post('/student/upload-documents', authenticateJWT, upload.fields([
   { name: 'birthCertificate', maxCount: 1 },
   { name: 'grades', maxCount: 1 },
@@ -351,115 +332,6 @@ const getStudentById = (id) => {
     });
   });
 };
-
-// app.put('/admin/update-status/:id', authenticateJWT, async (req, res) => {
-//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
-
-//   const { status, examLocation, examDate } = req.body;
-//   const studentId = req.params.id;
-
-//   const validStatuses = ['PENDING', 'APPROVED', 'DENIED', 'RECEIPT'];
-
-//   try {
-//     const studentCheck = await getStudentById(studentId);
-//     if (!studentCheck) {
-//       return res.status(404).json({ error: 'Student not found' });
-//     }
-
-//     const updatedStatus = examLocation ? 'RECEIPT' : status;
-
-//     if (!validStatuses.includes(updatedStatus)) {
-//       return res.status(400).json({ error: 'Invalid status value' });
-//     }
-
-//     const updatedExamDate = examDate || studentCheck.exam_date;
-
-//     const sql = `
-//       UPDATE students 
-//       SET status = ?, exam_location = ?, exam_date = ? 
-//       WHERE id = ? AND role = 'student'
-//     `;
-    
-//     db.query(sql, [updatedStatus, examLocation, updatedExamDate, studentId], (err, result) => {
-//       if (err) {
-//         console.error('SQL Error:', err.message);
-//         return res.status(500).json({ error: 'Database query failed', details: err.message });
-//       }
-
-//       if (result.affectedRows === 0) {
-//         return res.status(404).json({ error: 'Student does not exist' });
-//       }
-
-//       console.log(`Student ${studentId} status updated to ${updatedStatus}`);
-//       return res.status(200).json({ 
-//         success: true, 
-//         message: `Student status updated to '${updatedStatus}' successfully` 
-//       });
-//     });
-//   } catch (error) {
-//     console.error('Server Error:', error.message);
-//     res.status(500).json({ error: 'Failed to update student status', details: error.message });
-//   }
-// });
-
-// app.put('/admin/update-status/:id', authenticateJWT, async (req, res) => {
-//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
-
-//   console.log('Request Body:', req.body);
-
-//   const { status, examLocation, examDate } = req.body;
-//   const studentId = req.params.id;
-
-//   const validStatuses = ['PARTIAL', 'PENDING', 'APPROVED', 'DENIED', 'RECEIPT', 'SETEXAM', 'EXAM', 'RECEIPT APPROVAL', 'PASS', 'ADVISE'];
-
-//   if (!status || !validStatuses.includes(status)) {
-//     return res.status(400).json({ error: 'Invalid or missing status value' });
-//   }
-
-//   try {
-//     const studentCheck = await getStudentById(studentId);
-//     if (!studentCheck) {
-//       return res.status(404).json({ error: 'Student not found' });
-//     }
-
-//     const updatedStatus =
-//   validStatuses.includes(newStatus)
-//     ? (newStatus === 'SETEXAM' && examLocation ? 'RECEIPT' : newStatus)
-//     : 'PENDING';
-
-//     if (!validStatuses.includes(updatedStatus)) {
-//       return res.status(400).json({ error: 'Invalid status value' });
-//     }
-
-//     const updatedExamDate = examDate || studentCheck.exam_date;
-
-//     const sql = `
-//       UPDATE students 
-//       SET status = ?, exam_location = ?, exam_date = ? 
-//       WHERE id = ? AND role = 'student'
-//     `;
-
-//     db.query(sql, [updatedStatus, examLocation, updatedExamDate, studentId], (err, result) => {
-//       if (err) {
-//         console.error('SQL Error:', err.message);
-//         return res.status(500).json({ error: 'Database query failed', details: err.message });
-//       }
-
-//       if (result.affectedRows === 0) {
-//         return res.status(404).json({ error: 'Student does not exist' });
-//       }
-
-//       console.log(`Student ${studentId} status updated to ${updatedStatus}`);
-//       return res.status(200).json({ 
-//         success: true, 
-//         message: `Student status updated to '${updatedStatus}' successfully` 
-//       });
-//     });
-//   } catch (error) {
-//     console.error('Server Error:', error.message);
-//     res.status(500).json({ error: 'Failed to update student status', details: error.message });
-//   }
-// });
 
 app.put('/admin/update-status/:id', authenticateJWT, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
@@ -605,6 +477,38 @@ app.get('/courses', (req, res) => {
   });
 });
 
+// app.post('/student/upload-receipt', authenticateJWT, upload.single('receipt'), (req, res) => {
+//   console.log('Received file:', req.file);
+//   if (req.user.role !== 'student') {
+//     return res.status(403).json({ error: 'Access denied' });
+//   }
+
+//   const studentId = req.user.id;
+//   const receiptPath = req.file.path.replace(/\\/g, '/');
+
+//   const updateReceiptSql = "UPDATE documents SET payment_receipt = ?, receipt_status = 'Pending' WHERE student_id = ?";
+//   const updateStatusSql = "UPDATE students SET status = 'RECEIPT APPROVAL' WHERE id = ?";
+
+//   db.query(updateReceiptSql, [receiptPath, studentId], (err, result) => {
+//     if (err) {
+//       console.error('Failed to upload receipt:', err);
+//       return res.status(500).json({ error: 'Failed to upload receipt' });
+//     }
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).json({ error: 'No documents found for this student' });
+//     }
+
+//     db.query(updateStatusSql, [studentId], (err, result) => {
+//       if (err) {
+//         console.error('Failed to update student status:', err);
+//         return res.status(500).json({ error: 'Failed to update student status' });
+//       }
+
+//       res.status(200).json({ success: true, message: 'Receipt uploaded and status updated to receipt approval' });
+//     });
+//   });
+// });
 
 app.post('/student/upload-receipt', authenticateJWT, upload.single('receipt'), (req, res) => {
   console.log('Received file:', req.file);
@@ -613,12 +517,13 @@ app.post('/student/upload-receipt', authenticateJWT, upload.single('receipt'), (
   }
 
   const studentId = req.user.id;
-  const receiptPath = req.file.path;
+
+  const receiptFileName = path.basename(req.file.path);
 
   const updateReceiptSql = "UPDATE documents SET payment_receipt = ?, receipt_status = 'Pending' WHERE student_id = ?";
   const updateStatusSql = "UPDATE students SET status = 'RECEIPT APPROVAL' WHERE id = ?";
 
-  db.query(updateReceiptSql, [receiptPath, studentId], (err, result) => {
+  db.query(updateReceiptSql, [receiptFileName, studentId], (err, result) => {
     if (err) {
       console.error('Failed to upload receipt:', err);
       return res.status(500).json({ error: 'Failed to upload receipt' });
@@ -627,7 +532,6 @@ app.post('/student/upload-receipt', authenticateJWT, upload.single('receipt'), (
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'No documents found for this student' });
     }
-
 
     db.query(updateStatusSql, [studentId], (err, result) => {
       if (err) {
@@ -639,6 +543,7 @@ app.post('/student/upload-receipt', authenticateJWT, upload.single('receipt'), (
     });
   });
 });
+
 
 app.post('/admin/approve-payment/:studentId', authenticateJWT, (req, res) => {
   if (req.user.role !== 'admin') {
@@ -734,6 +639,60 @@ app.post('/admin/deny-payment/:studentId', authenticateJWT, (req, res) => {
     res.status(200).json({ success: true, message: 'Payment denied successfully' });
   });
 });
+
+app.use('/uploads', express.static('uploads'));
+
+
+app.get('/admin/student-documents/:id', authenticateJWT, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
+
+  const studentId = req.params.id;
+
+  try {
+    const sql = `
+      SELECT birth_certificate, grades, payment_receipt, receipt_status 
+      FROM documents 
+      WHERE student_id = ?;
+    `;
+    db.query(sql, [studentId], (err, results) => {
+      if (err) {
+        console.error('Database error:', err.message);
+        return res.status(500).json({ error: 'Database query failed' });
+      }
+
+      if (!results.length) {
+        return res.status(404).json({ error: 'No documents found for this student' });
+      }
+
+      const documents = results[0];
+
+      if (!documents.birth_certificate) {
+        console.warn('Missing path for birth certificate');
+      }
+      if (!documents.grades) {
+        console.warn('Missing path for grades');
+      }
+      if (!documents.payment_receipt) {
+        console.warn('Missing path for payment receipt');
+      }
+
+      res.status(200).json({
+        documents: {
+          birthCertificate: documents.birth_certificate,
+          grades: documents.grades,
+          paymentReceipt: {
+            path: documents.payment_receipt,
+            status: documents.receipt_status,
+          },
+        },
+      });
+    });
+  } catch (error) {
+    console.error('Server error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch student documents', details: error.message });
+  }
+});
+
 
 app.listen(5000, () => {
   console.log('Server running on port 5000');

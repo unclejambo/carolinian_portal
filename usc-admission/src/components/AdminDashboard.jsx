@@ -10,7 +10,68 @@ function AdminDashboard() {
   const [newStatus, setNewStatus] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [examLocation, setExamLocation] = useState('');
+  const [documents, setDocuments] = useState([]);
+
   const navigate = useNavigate();
+
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+const handleCloseDocuments = () => {
+  setDocuments([]);
+  setCarouselIndex(0);
+};
+
+const handleNextDocument = () => {
+  if (carouselIndex < documents.length - 1) {
+    const nextIndex = carouselIndex + 1;
+    if (documents[nextIndex].documentPath === null) {
+      setCarouselIndex(0);
+    } else {
+      setCarouselIndex(nextIndex);
+    }
+  } else {
+    setCarouselIndex(0);
+  }
+};
+
+const handlePreviousDocument = () => {
+  if (carouselIndex > 0) {
+    setCarouselIndex(carouselIndex - 1);
+  } else {
+    setCarouselIndex(documents.length - 1);
+  }
+};
+
+  const fetchStudentDocuments = async (student) => {
+    setSelectedStudent(student);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`http://localhost:5000/admin/student-documents/${student.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      console.log('Response data:', res.data);
+  
+      const documentsArray = [];
+      const { documents } = res.data;
+  
+      if (documents) {
+        for (const [type, path] of Object.entries(documents)) {
+          if (typeof path === 'object' && path !== null) {
+            documentsArray.push({ documentType: type, documentPath: path.path });
+          } else {        
+            documentsArray.push({ documentType: type, documentPath: path });
+          }
+        }
+      }
+  
+      console.log('Documents Array:', documentsArray);
+      setDocuments(documentsArray);
+    } catch (error) {
+      console.error('Failed to fetch documents:', error);
+    }
+  };
+  
 
   const fetchStudents = async () => {
     try {
@@ -96,25 +157,6 @@ function AdminDashboard() {
     setExamLocation(student.exam_location || '');
     setShowEditModal(true);
   };
-
-  // const handleSaveStatus = async () => {
-  //   if (!selectedStudent) return;
-  
-  //   const updatedStatus = examLocation ? 'RECEIPT' : newStatus;
-    
-  //   try {
-  //     const token = localStorage.getItem('token');
-  //     await axios.put(
-  //       `http://localhost:5000/admin/update-status/${selectedStudent.id}`,
-  //       { status: updatedStatus, examLocation },
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
-  //     setShowEditModal(false);
-  //     await fetchStudents();
-  //   } catch (error) {
-  //     console.error('Failed to update status:', error);
-  //   }
-  // };
 
   const handleSaveStatus = async () => {
     if (!selectedStudent) return;
@@ -224,7 +266,10 @@ function AdminDashboard() {
               ) : null}
 
               {student.status !== 'pending' && student.status !== 'Waiting for Payment' ? (
+                <>
                 <button onClick={() => handleEditStatus(student)}>Edit Status</button>
+                <button onClick={() => fetchStudentDocuments(student)}>View Documents</button>
+                </>
               ) : null}
             </td>
           </tr>
@@ -232,6 +277,40 @@ function AdminDashboard() {
       </tbody>
     </table>
   </div>    
+  {documents.length > 0 && (
+  <div className="modal-overlay">
+    <div className="modal" style={{ textAlign: 'center' }}>
+      <h2>
+        Document ni {selectedStudent?.first_name} {selectedStudent?.last_name}
+      </h2>
+      <div style={{ position: 'relative' }}>
+        <img
+          src={`http://localhost:5000/uploads/${documents[carouselIndex].documentPath}`}
+          alt={documents[carouselIndex].documentType}
+          style={{
+            maxHeight: '80vh',
+            maxWidth: '80vw',
+            objectFit: 'contain',
+          }}
+        />
+        <p>{documents[carouselIndex].documentType}</p>
+      </div>
+      <button onClick={handlePreviousDocument}>
+        Previous
+      </button>
+      <button onClick={handleNextDocument}>Next</button>
+      <button
+        onClick={handleCloseDocuments}
+        style={{ marginLeft: '10px', color: 'red' }}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+
+
       {showEditModal && selectedStudent && (
         <div className="modal-overlay">
           <div className="modal">
