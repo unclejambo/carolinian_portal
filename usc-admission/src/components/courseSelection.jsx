@@ -12,6 +12,8 @@ const CourseSelection = () => {
   const [error, setError] = useState(null);
   const [birthCertificateFile, setBirthCertificateFile] = useState(null);
   const [gradesFile, setGradesFile] = useState(null);
+  const [studentName, setStudentName] = useState("");
+  const [studentId, setStudentId] = useState("");
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -103,9 +105,12 @@ const CourseSelection = () => {
   return (
     <div className="dashboard-content">
       <header className="dashboard-header">
-      <h1 style={{ color: 'black' }}>Carolinian Portal</h1>
-      <div className="header-right" style={{ color: 'black' }}>
-      <p>Student Name: John Doe<br />APPLICANT ID</p>
+        <h1 style={{ color: "black" }}>Carolinian Portal</h1>
+        <div className="header-right" style={{ color: "black" }}>
+          <p>
+            {studentName} <br />
+            Applicant ID: {studentId}
+          </p>
           <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
@@ -136,48 +141,49 @@ const CourseSelection = () => {
             onChange={handleCourseChange}
             defaultValue=""
             style={{
-              color: '#000',
+              color: 'black',
               backgroundColor: '#fff',
               padding: '5px',
               borderRadius: '5px',
               width: '200px',
             }}
           >
-            <option value="" disabled>
-              Select a course
-            </option>
-            {courses.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.name}
-              </option>
-            ))}
-          </select>
+            <option value="" disabled style={{ color: 'black' }}>
+    Select a course
+  </option>
+  {courses.map((course) => (
+    <option key={course.id} value={course.id} style={{ color: 'black' }}>
+      {course.name}
+    </option>
+  ))}
+</select>
 
-          {requirements && (
-            <div>
-              <h3>Requirements for {selectedCourse}:</h3>
-              <p>{requirements}</p>
-            </div>
-          )}
+{requirements && (
+  <div style={{ color: 'black' }}>
+    <h3>Requirements for {selectedCourse}:</h3>
+    <p>{requirements}</p>
+  </div>
+)}
 
-          <div style={{ marginTop: '20px' }}>
-            <label>
-              Upload Birth Certificate:
-              <input
-                type="file"
-                onChange={(e) => setBirthCertificateFile(e.target.files[0])}
-                style={{ display: 'block', margin: '10px 0' }}
-              />
-            </label>
-            <label>
-              Upload Grades:
-              <input
-                type="file"
-                onChange={(e) => setGradesFile(e.target.files[0])}
-                style={{ display: 'block', margin: '10px 0' }}
-              />
-            </label>
-          </div>
+<div style={{ marginTop: '20px' }}>
+  <label style={{ color: 'black' }}>
+    Upload Birth Certificate:
+    <input
+      type="file"
+      onChange={(e) => setBirthCertificateFile(e.target.files[0])}
+      style={{ display: 'block', margin: '10px 0' }}
+    />
+  </label>
+  <label style={{ color: 'black' }}>
+    Upload Grades:
+    <input
+      type="file"
+      onChange={(e) => setGradesFile(e.target.files[0])}
+      style={{ display: 'block', margin: '10px 0' }}
+    />
+  </label>
+</div>
+
 
           <button
             type="submit"

@@ -10,7 +10,9 @@ function Dashboard() {
   const [examLocation, setExamLocation] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [receipt, setReceipt] = useState(null);
-  const [availableDates, setAvailableDates] = useState([]); // Missing initialization added here
+  const [studentName, setStudentName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [availableDates, setAvailableDates] = useState([]);
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
@@ -26,8 +28,11 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const currentStatus = res.data.status || "pending";
-        setStatus(currentStatus);
+        const { status: currentStatus, first_name, student_id } = res.data;
+
+        setStatus(currentStatus || "pending");
+        setStudentName(first_name);
+        setStudentId(student_id);
         setIsAuthenticated(true);
 
         if (currentStatus.toLowerCase() === "partial") {
@@ -39,7 +44,7 @@ function Dashboard() {
         if (res.data.payment_status) setPaymentStatus(res.data.payment_status);
       } catch (error) {
         console.error("Error fetching status or token is invalid:", error);
-        handleLogout(); // Ensure this is correctly referenced
+        handleLogout();
       }
     };
 
@@ -147,13 +152,16 @@ function Dashboard() {
     statusStyle = { color: "green" };
   } else if (status.toLowerCase() === "pending") {
     statusMessage = "Your admission status is still pending.";
-    statusStyle = { color: "yellow" };
+    statusStyle = { color: "black" };
   } else if (status.toLowerCase() === "receipt approval") {
     statusMessage = "We are still verifying your receipt.";
-    statusStyle = { color: "yellow" };
+    statusStyle = { color: "black" };
+  } else if (status.toLowerCase() === "setexam") {
+    statusMessage = "Please select a valid exam date";
+    statusStyle = { color: "black" };
   } else if (status.toLowerCase() === "pass") {
     statusMessage =
-      "Congratulations! You have passed. Check your email for a scheduled interview from the department of your chosen course.";
+      "Congratulations! You have passed. Check your email for your score and a scheduled interview from the department of your chosen course.";
     statusStyle = { color: "green" };
   } else if (status.toLowerCase() === "advise") {
     statusMessage =
@@ -207,7 +215,7 @@ function Dashboard() {
           ? "PASSED"
           : ["advise"].includes(status.toLowerCase())
           ? "ADVISE TO SHIFT"
-          : "X",
+          : "X",    
     },
   ];
 
@@ -217,72 +225,68 @@ function Dashboard() {
         <h1 style={{ color: "black" }}>Carolinian Portal</h1>
         <div className="header-right" style={{ color: "black" }}>
           <p>
-            Student Name: <br />
-            APPLICANT ID
+            {studentName} <br />
+            Applicant ID: {studentId}
           </p>
           <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
         </div>
       </header>
-
-      <aside className="checklist">
-        {checklistItems.map((item, index) => (
-          <div
-            key={index}
-            className={`checklist-item ${
-              item.condition === "DONE" ? "done" : "pending"
-            }`}
-          >
-            <p>
-              {item.label}{" "}
-              <span
-                style={{
-                  color:
-                    item.condition === "DONE"
-                      ? "green"
-                      : item.condition === "VALIDATING"
-                      ? "orange"
-                      : "red",
-                  fontWeight: "bold",
-                }}
-              >
-                {item.condition}
-              </span>
-            </p>
+      <div className="dashboard-body">
+        <aside className="checklist">
+          {checklistItems.map((item, index) => (
+            <div
+              key={index}
+              className={`checklist-item ${item.condition === "DONE" || item.condition === "PASSED" ? "done" : "pending"}`}
+            >
+              <p>
+                {item.label}{" "}
+                <span
+                  style={{
+                    color:
+                      item.condition === "DONE" || item.condition === "PASSED"
+                        ? "green"
+                        : item.condition === "VALIDATING" || item.condition === "ADVISE TO SHIFT"
+                        ? "orange"
+                        : "red",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {item.condition}
+                </span>
+              </p>
+            </div>
+          ))}
+        </aside>
+        <main className="dashboard-content">
+          <div className="status-box">
+            <p style={statusStyle}>{statusMessage}</p>
           </div>
-        ))}
-      </aside>
-
-      <main className="dashboard-content">
-        <div className="status-box">
-          <p style={statusStyle}>{statusMessage}</p>
-        </div>
-
-        {status.toLowerCase() === "approved" && paymentStatus.toLowerCase() !== "paid" && (
-          <div>
-            <p>Please upload your payment receipt.</p>
-            <input type="file" accept="image/*" onChange={(e) => setReceipt(e.target.files[0])} />
-            <button onClick={handleUploadReceipt}>Upload Receipt</button>
-          </div>
-        )}
-
-        {status.toLowerCase() === "setexam" && (
-          <div>
-            <label>Set Exam Date:</label>
-            <input
-              type="date"
-              value={examDate}
-              onChange={(e) => setExamDate(e.target.value)}
-            />
-            <button onClick={handleSetExamDate}>Set Exam Date</button>
-          </div>
-        )}
-
-        {examLocation && <p>Exam Location: {examLocation}</p>}
-      </main>
+          {status.toLowerCase() === "approved" && paymentStatus.toLowerCase() !== "paid" && (
+            <div>
+              <p style={{ color: "black" }}>Please upload your payment receipt.</p>
+              <input type="file" accept="image/*" onChange={(e) => setReceipt(e.target.files[0])} />
+              <button onClick={handleUploadReceipt}>
+                Upload Receipt
+              </button>
+            </div>
+          )}
+          {status.toLowerCase() === "setexam" && (
+            <div>
+              <label style={{ color: "black" }}>Set Exam Date:</label>
+              <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+              <button style={{ color: "black" }} onClick={handleSetExamDate}>
+                 Set Exam Date
+              </button>
+            </div>
+          )}
+          {examLocation && <p style={{ color: "black" }}>Exam Location: {examLocation}</p>}
+        </main>
+      </div>
     </div>
   );
+  
 }
 
 export default Dashboard;

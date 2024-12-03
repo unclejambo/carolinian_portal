@@ -29,7 +29,7 @@ function Register() {
   
       setErrorMessage('');
       const userConfirmed = window.confirm(
-        `Registration successful! Your Applicant Number is: ${response.data.applicant_number}. Click OK to proceed to the student dashboard.`
+        `Registration successful! Your Student Number is: ${response.data.student_number}. Click OK to proceed to the student dashboard.`
       );
       if (userConfirmed) {
         localStorage.setItem('token', response.data.token);
@@ -39,6 +39,10 @@ function Register() {
       console.error('Registration failed', error);
       setErrorMessage(error.response?.data?.message || 'Registration failed. Please try again.');
     }
+
+    setStudentName(first_name);
+    setStudentId(student_id);
+
   };
   
 

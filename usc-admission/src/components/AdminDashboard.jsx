@@ -331,9 +331,9 @@ const handlePreviousDocument = () => {
                 onChange={(e) => setExamLocation(e.target.value)}
               >
                 <option value="">Select Location</option>
-                <option value="Exam Location 1">Exam Location 1</option>
-                <option value="Exam Location 2">Exam Location 2</option>
-                <option value="Exam Location 3">Exam Location 3</option>
+                <option value="LB448">LB448</option>
+                <option value="USC-DC">USC-DC</option>
+                <option value="USC-TC">USC-TC</option>
               </select>
             </label>
             <button onClick={handleSaveStatus}>Save</button>

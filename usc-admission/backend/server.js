@@ -90,9 +90,59 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// app.post('/register', (req, res) => {
+//   const { first_name, last_name, email, password, contact_number, classification } = req.body;
+//   const applicant_number = 'APP' + Date.now();
+//   const role = 'student';
+
+//   bcrypt.hash(password, 10, (err, hashedPassword) => {
+//     if (err) {
+//       console.error('Password hashing failed:', err);
+//       return res.status(500).json({ error: 'Password hashing failed' });
+//     }
+
+//     const sql = `
+//       INSERT INTO students (first_name, last_name, email, password, contact_number, classification, applicant_number, role, status)
+//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+//     `;
+//     db.query(
+//       sql,
+//       [first_name, last_name, email, hashedPassword, contact_number, classification, applicant_number, role, 'PARTIAL'],
+//       (err, result) => {
+//         if (err) {
+//           console.error('Database insertion failed:', err);
+//           return res.status(500).json({ error: 'Database insertion failed', details: err.message });
+//         }
+
+//         console.log('Student inserted into database:', result);
+
+//         const student_id = result.insertId;
+
+//         const docSql = `
+//           INSERT INTO documents (student_id)
+//           VALUES (?)
+//         `;
+//         db.query(docSql, [student_id], (err, docResult) => {
+//           if (err) {
+//             console.error('Document insertion failed:', err);
+//             return res.status(500).json({ error: 'Document insertion failed', details: err.message });
+//           }
+
+//           console.log('Documents row created for student:', docResult);
+
+//           res.status(200).json({
+//             success: true,
+//             message: 'Registration successful',
+//             applicant_number: applicant_number,
+//           });
+//         });
+//       }
+//     );
+//   });
+// });
+
 app.post('/register', (req, res) => {
   const { first_name, last_name, email, password, contact_number, classification } = req.body;
-  const applicant_number = 'APP' + Date.now();
   const role = 'student';
 
   bcrypt.hash(password, 10, (err, hashedPassword) => {
@@ -102,12 +152,12 @@ app.post('/register', (req, res) => {
     }
 
     const sql = `
-      INSERT INTO students (first_name, last_name, email, password, contact_number, classification, applicant_number, role, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO students (first_name, last_name, email, password, contact_number, classification, role, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     db.query(
       sql,
-      [first_name, last_name, email, hashedPassword, contact_number, classification, applicant_number, role, 'PARTIAL'],
+      [first_name, last_name, email, hashedPassword, contact_number, classification, role, 'PARTIAL'],
       (err, result) => {
         if (err) {
           console.error('Database insertion failed:', err);
@@ -117,6 +167,7 @@ app.post('/register', (req, res) => {
         console.log('Student inserted into database:', result);
 
         const student_id = result.insertId;
+        const student_number = `${student_id}`;
 
         const docSql = `
           INSERT INTO documents (student_id)
@@ -133,13 +184,14 @@ app.post('/register', (req, res) => {
           res.status(200).json({
             success: true,
             message: 'Registration successful',
-            applicant_number: applicant_number,
+            student_number: student_number,
           });
         });
       }
     );
   });
 });
+
 
 
 app.post('/login', (req, res) => {
@@ -423,7 +475,7 @@ app.post('/student/set-exam-date', authenticateJWT, (req, res) => {
 });
 
 app.get('/student-status', authenticateJWT, (req, res) => {
-  const sql = "SELECT status FROM students WHERE id = ?";
+  const sql = "SELECT status, first_name, id FROM students WHERE id = ?";
   db.query(sql, [req.user.id], (err, result) => {
     if (err) {
       return res.status(500).json({ error: 'Database query failed' });
@@ -431,9 +483,15 @@ app.get('/student-status', authenticateJWT, (req, res) => {
     if (result.length === 0) {
       return res.status(404).json({ error: 'Student not found' });
     }
-    res.json({ status: result[0].status });
+    
+    res.json({
+      status: result[0].status,
+      first_name: result[0].first_name,
+      student_id: result[0].id,
+    });
   });
 });
+
 
 app.delete('/admin/delete-student/:id', authenticateJWT, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
