@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const CourseSelection = () => {
+  const [status, setStatus] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [requirements, setRequirements] = useState('');
@@ -14,6 +16,7 @@ const CourseSelection = () => {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
+  
     const fetchCourses = async () => {
       try {
         const response = await axios.get('http://localhost:5000/courses');
@@ -29,6 +32,13 @@ const CourseSelection = () => {
     fetchCourses();
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setStatus("");
+    setIsAuthenticated(false);
+    navigate("/");
+  };
+
   const handleCourseChange = (event) => {
     const courseId = event.target.value;
     const selected = courses.find((course) => course.id === parseInt(courseId));
@@ -41,42 +51,6 @@ const CourseSelection = () => {
       setRequirements('');
     }
   };
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   if (!selectedCourse) {
-  //     alert('Please select a course before proceeding.');
-  //     return;
-  //   }
-
-  //   if (!birthCertificateFile || !gradesFile) {
-  //     alert('Both files are required for submission.');
-  //     return;
-  //   }
-
-  //   try {
-  //     await axios.post('http://localhost:5000/student/select-course', {
-  //       courseId: selectedCourse,
-  //     });
-
-  //     const formData = new FormData();
-  //     formData.append('birthCertificate', birthCertificateFile);
-  //     formData.append('grades', gradesFile);
-
-  //     await axios.post('http://localhost:5000/student/upload-documents', formData, {
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //     });
-
-  //     alert('Course and documents submitted successfully!');
-  //     navigate('/dashboard');
-  //   } catch (err) {
-  //     console.error('Error during submission:', err);
-  //     alert('Failed to submit. Please try again later.');
-  //   }
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,7 +101,17 @@ const CourseSelection = () => {
   
 
   return (
-    <div>
+    <div className="dashboard">
+      {/* <header className="dashboard-header">
+      <h1 style={{ color: 'black' }}>Carolinian Portal</h1>
+      <div className="header-right" style={{ color: 'black' }}>
+      <p>Student Name: John Doe<br />APPLICANT ID</p>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
+      </header> */}
+      
       <div
         style={{
           backgroundColor: '#fff',
